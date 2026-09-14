@@ -2214,3 +2214,42 @@ void init_win_context(void)
     pthread_mutex_init(&win_data_mutex, &attr);
     pthread_mutexattr_destroy(&attr);
 }
+
+/* Narrow experimental DXMT bridge; do not expose macdrv_win_data layout. */
+struct aster_metal_surface
+{
+    struct client_surface *client;
+    macdrv_metal_view view;
+};
+
+__attribute__((visibility("default")))
+void *aster_macdrv_create_metal_view(HWND hwnd, macdrv_metal_device device, macdrv_metal_layer *layer)
+{
+    struct aster_metal_surface *handle = calloc(1, sizeof(*handle));
+    struct macdrv_client_surface *surface;
+    *layer = NULL;
+    if (!handle) return NULL;
+    handle->client = macdrv_CreateClientSurface(hwnd, 0, FALSE);
+    if (!handle->client) { free(handle); return NULL; }
+    surface = impl_from_client_surface(handle->client);
+    handle->view = macdrv_view_create_metal_view(surface->cocoa_view, device);
+    if (handle->view) *layer = macdrv_view_get_metal_layer(handle->view);
+    if (!*layer)
+    {
+        if (handle->view) macdrv_view_release_metal_view(handle->view);
+        client_surface_release(handle->client);
+        free(handle);
+        return NULL;
+    }
+    return handle;
+}
+
+__attribute__((visibility("default")))
+void aster_macdrv_release_metal_view(void *opaque)
+{
+    struct aster_metal_surface *handle = opaque;
+    if (!handle) return;
+    macdrv_view_release_metal_view(handle->view);
+    client_surface_release(handle->client);
+    free(handle);
+}
