@@ -36,6 +36,9 @@
 #endif
 #ifdef __APPLE__
 # include <mach-o/dyld.h>
+# include <spawn.h>
+# include <errno.h>
+extern char **environ;
 #endif
 
 #include "main.h"
@@ -71,6 +74,26 @@ static void init_reserved_areas(void)
         /* Match how the preloader maps reserved areas: */
         mmap(wine_main_preload_info[i].addr, wine_main_preload_info[i].size, PROT_NONE,
              MAP_FIXED | MAP_NORESERVE | MAP_PRIVATE | MAP_ANON, -1, 0);
+    }
+}
+
+#elif defined(__APPLE__) && defined(__aarch64__)
+
+/* Tell Wine's allocator that the entitled loader owns the low address range. */
+static const struct wine_preload_info preload_info[] =
+{
+    { (void *)0x10000, 0x16fff0000 },
+    { 0, 0 }
+};
+const __attribute((visibility("default"))) struct wine_preload_info *wine_main_preload_info = preload_info;
+static void init_reserved_areas(void)
+{
+    void *p = mmap( preload_info[0].addr, preload_info[0].size, PROT_NONE,
+                   MAP_FIXED | MAP_NORESERVE | MAP_PRIVATE | MAP_ANON, -1, 0 );
+    if (p == MAP_FAILED)
+    {
+        perror("wine: reserve low address space");
+        exit(1);
     }
 }
 
@@ -174,6 +197,24 @@ static void *try_dlopen( const char *argv0 )
 int main( int argc, char *argv[] )
 {
     void *handle;
+
+#if defined(__APPLE__) && defined(__aarch64__)
+    /* Enter the Windows page-size environment before loading any Wine DLL. */
+    if (getpagesize() != 4096)
+    {
+        posix_spawnattr_t attr;
+        int error = posix_spawnattr_init( &attr );
+        if (!error)
+        {
+            error = posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC );
+            if (!error) error = posix_spawnattr_set_4k_page_size_np( &attr );
+            if (!error) error = posix_spawn( NULL, get_self_exe(), NULL, &attr, argv, environ );
+            posix_spawnattr_destroy( &attr );
+        }
+        fprintf( stderr, "wine: cannot enter 4 KB process: %s\n", strerror(error) );
+        return 1;
+    }
+#endif
 
     init_reserved_areas();
 

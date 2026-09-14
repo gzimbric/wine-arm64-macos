@@ -69,6 +69,7 @@
 # include <mach/mach.h>
 # include <mach/mach_error.h>
 # include <mach-o/getsect.h>
+# include <mach-o/dyld.h>
 # include <crt_externs.h>
 # ifndef _POSIX_SPAWN_DISABLE_ASLR
 #  define _POSIX_SPAWN_DISABLE_ASLR 0x0100
@@ -398,6 +399,19 @@ static void init_paths(void)
         data_dir = build_relative_path( dll_dir, LIBDIR "/wine", DATADIR "/wine" );
         wineloader = build_path( ntdll_dir, "wine" );
     }
+
+#if defined(__APPLE__) && defined(__aarch64__)
+    /* The provisioned app is the executable, even when ntdll is symlinked
+     * into a development build tree. Child processes need its signature. */
+    {
+        char path[PATH_MAX];
+        uint32_t size = sizeof(path);
+        char *self;
+        if (_NSGetExecutablePath(path, &size) || !(self = realpath(path, NULL)))
+            fatal_error("cannot resolve ARM64 Wine loader executable\n");
+        wineloader = self;
+    }
+#endif
 
     set_dll_path();
     set_system_dll_path();
