@@ -543,6 +543,33 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         app_name = name;
     }
 
+    /* Aster opt-in Steam CEF compatibility: keep vendor files and updates intact.
+     * Enabled only by an explicitly approved bottle setting. Single-process CEF
+     * reduces browser isolation; never enable it as an engine-wide default. */
+    {
+        WCHAR enabled[2];
+        const WCHAR *base = app_name, *scan;
+        static const WCHAR extra[] = L" --disable-gpu --single-process";
+        for (scan = app_name; *scan; ++scan)
+            if (*scan == '\\' || *scan == '/') base = scan + 1;
+        if (!wcsicmp( base, L"steamwebhelper.exe" ) &&
+            GetEnvironmentVariableW( L"ASTER_STEAM_CEF_SINGLE_PROCESS", enabled, ARRAY_SIZE(enabled) ) == 1 &&
+            enabled[0] == '1' && !wcsstr( tidy_cmdline, L"--single-process" ))
+        {
+            SIZE_T length = wcslen( tidy_cmdline ) + ARRAY_SIZE(extra);
+            WCHAR *updated;
+            if (length > 32767 || !(updated = RtlAllocateHeap( GetProcessHeap(), 0, length * sizeof(WCHAR) )))
+            {
+                status = STATUS_NO_MEMORY;
+                goto done;
+            }
+            wcscpy( updated, tidy_cmdline );
+            wcscat( updated, extra );
+            if (tidy_cmdline != cmd_line) RtlFreeHeap( GetProcessHeap(), 0, tidy_cmdline );
+            tidy_cmdline = updated;
+        }
+    }
+
     /* Warn if unsupported features are used */
 
     if (flags & (IDLE_PRIORITY_CLASS | HIGH_PRIORITY_CLASS | REALTIME_PRIORITY_CLASS |
