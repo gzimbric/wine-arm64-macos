@@ -167,6 +167,7 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 
 static struct wine_rb_tree views_tree;
 static pthread_mutex_t virtual_mutex;
+static BOOL aster_skip_host_regions;
 pthread_key_t thread_data_key = 0;
 
 static const UINT page_shift = 12;
@@ -1557,6 +1558,39 @@ static void* try_map_free_area( void *base, void *end, ptrdiff_t step,
                  strerror(errno), start, (char *)start + size, unix_prot );
             return NULL;
         }
+#ifdef __APPLE__
+        if (aster_skip_host_regions)
+        {
+            mach_vm_address_t address = (mach_vm_address_t)start;
+            mach_vm_size_t region_size = 0;
+            struct vm_region_basic_info_64 info;
+            mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+            mach_port_t object = MACH_PORT_NULL;
+            kern_return_t ret = mach_vm_region( mach_task_self(), &address, &region_size,
+                VM_REGION_BASIC_INFO_64, (vm_region_info_t)&info, &count, &object );
+            if (object != MACH_PORT_NULL) mach_port_deallocate( mach_task_self(), object );
+            /* Query only after a collision. The final mapping still uses no-replace
+             * semantics, so an intervening native allocation cannot be overwritten. */
+            if (ret == KERN_SUCCESS && region_size && address < (UINT_PTR)start + size &&
+                address <= ~(UINT_PTR)0 - region_size && address + region_size > (UINT_PTR)start)
+            {
+                UINT_PTR mask = step > 0 ? step - 1 : -step - 1;
+                UINT_PTR next;
+                if (step > 0)
+                {
+                    if (address + region_size > ~(UINT_PTR)0 - mask) return NULL;
+                    next = (address + region_size + mask) & ~mask;
+                    if (next > (UINT_PTR)start) { start = (void *)next; continue; }
+                }
+                else if (step < 0)
+                {
+                    if (address < size) return NULL;
+                    next = (address - size) & ~mask;
+                    if (next < (UINT_PTR)start) { start = (void *)next; continue; }
+                }
+            }
+        }
+#endif
         if ((step > 0 && (char *)end - (char *)start < step) ||
             (step < 0 && (char *)start - (char *)base < -step) ||
             step == 0)
@@ -3661,6 +3695,7 @@ void virtual_init(void)
 #endif
 
     aster_wx_probe = getenv("ASTER_WX_PROBE") && !strcmp(getenv("ASTER_WX_PROBE"), "1");
+    aster_skip_host_regions = getenv("ASTER_SKIP_HOST_REGIONS") && !strcmp(getenv("ASTER_SKIP_HOST_REGIONS"), "1");
     kernel_writewatch_init();
 
     if (preload_info && *preload_info)
