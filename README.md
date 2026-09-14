@@ -1,6 +1,6 @@
 # Wine — experimental native macOS ARM64 branch
 
-A private development branch of Wine for native Apple Silicon host processes and cross-architecture Windows execution. This repository contains Wine source and seven experimental Darwin patches. It contains no launcher or prebuilt runtime.
+A development branch of Wine for native Apple Silicon host processes and cross-architecture Windows execution. This repository contains Wine source and seven experimental Darwin patches. It contains no launcher or prebuilt runtime.
 
 **Start here: [macOS ARM64 status and integration notes](docs/macos-arm64/README.md).**
 
