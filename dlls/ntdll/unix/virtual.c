@@ -238,6 +238,7 @@ static struct file_view *view_block_start, *view_block_end, *next_free_view;
 static const size_t view_block_size = 0x100000;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
+static BOOL aster_wx_probe; /* diagnostic only: fault-driven native ARM64 W^X */
 static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
 static BOOL enable_write_exceptions;  /* raise exception on writes to executable memory */
 
@@ -3659,6 +3660,7 @@ void virtual_init(void)
     host_addr_space_limit = address_space_limit;
 #endif
 
+    aster_wx_probe = getenv("ASTER_WX_PROBE") && !strcmp(getenv("ASTER_WX_PROBE"), "1");
     kernel_writewatch_init();
 
     if (preload_info && *preload_info)
@@ -4611,6 +4613,24 @@ NTSTATUS virtual_handle_fault( struct thread_data *data, EXCEPTION_RECORD *rec, 
 
     mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
     vprot = get_host_page_vprot( page );
+
+#if defined(__APPLE__) && defined(__aarch64__)
+    /* Bounded experiment only. Real code-cache integration must avoid these
+     * process-wide flips and fault overhead. Never alter guards or writewatch. */
+    if (aster_wx_probe && (vprot & VPROT_COMMITTED) && is_vprot_exec_write(vprot) &&
+        !(vprot & (VPROT_GUARD | VPROT_WRITEWATCH)) &&
+        (err == EXCEPTION_WRITE_FAULT ||
+         (err == EXCEPTION_EXECUTE_FAULT && !is_emulated_code((ULONG_PTR)page))))
+    {
+        int prot = PROT_READ | (err == EXCEPTION_EXECUTE_FAULT ? PROT_EXEC : PROT_WRITE);
+        if (!mprotect(page, host_page_size, prot))
+        {
+            mutex_unlock(&virtual_mutex);
+            rec->ExceptionCode = STATUS_SUCCESS;
+            return STATUS_SUCCESS;
+        }
+    }
+#endif
 
 #ifdef __APPLE__
     /* Rosetta on Apple Silicon misreports certain write faults as read faults. */
