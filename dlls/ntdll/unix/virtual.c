@@ -1980,6 +1980,12 @@ static inline int mprotect_exec( void *base, size_t size, int unix_prot )
         if (!(unix_prot & PROT_WRITE)) return -1;
     }
 
+#if defined(__APPLE__) && defined(__aarch64__)
+    /* Diagnostic W^X mode also covers committing an existing reservation.
+     * Keep the Windows protection metadata; execution faults switch to RX. */
+    if (aster_wx_probe && (unix_prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC))
+        return mprotect( base, size, unix_prot & ~PROT_EXEC );
+#endif
     return mprotect( base, size, unix_prot );
 }
 
