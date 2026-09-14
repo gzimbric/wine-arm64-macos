@@ -1,6 +1,6 @@
 # Experimental native Wine for Apple Silicon
 
-This private development branch contains Wine itself and experimental Darwin ARM64 changes. It does not contain the Aster launcher, FEX, DXMT, games, Steam installations, Wine prefixes, Apple SDKs, signing identities, or provisioning profiles.
+This development branch contains Wine itself and experimental Darwin ARM64 changes. It does not contain the Aster launcher, FEX, DXMT, games, Steam installations, Wine prefixes, Apple SDKs, signing identities, or provisioning profiles.
 
 Base: Wine commit `2550c238151a00e43908561f32b6e131603ec6f7` (11.17 development tree). The original Wine README and LGPL license remain authoritative for the Wine project. This branch is an independent experiment, not an official Wine or CodeWeavers release.
 
