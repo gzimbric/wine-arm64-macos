@@ -1,0 +1,1 @@
+Standalone diagnostic fixtures imported from the development harness. These fixtures retain GPL-3.0 licensing; see COPYING. Wine source and patches remain under Wine's LGPL license. Run only in an isolated test environment.
