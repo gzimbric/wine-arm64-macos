@@ -59,6 +59,142 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
+#ifdef __APPLE__
+#include <os/arch/arm64.h>
+static BOOL aster_custom_x18;
+void aster_x18_enter(void) {
+    if (aster_custom_x18 && !os_custom_x18_abi_enabled()) os_set_custom_x18_abi_enabled(true);
+}
+void aster_x18_leave(void) {
+    if (aster_custom_x18 && os_custom_x18_abi_enabled()) os_set_custom_x18_abi_enabled(false);
+}
+__ASM_GLOBAL_FUNC( aster_x18_enter_preserve,
+    "sub sp, sp, #0x300\n\t"
+    "stp x0, x1, [sp, #0x0]\n\t"
+    "stp x2, x3, [sp, #0x10]\n\t"
+    "stp x4, x5, [sp, #0x20]\n\t"
+    "stp x6, x7, [sp, #0x30]\n\t"
+    "stp x8, x9, [sp, #0x40]\n\t"
+    "stp x10, x11, [sp, #0x50]\n\t"
+    "stp x12, x13, [sp, #0x60]\n\t"
+    "stp x14, x15, [sp, #0x70]\n\t"
+    "stp x16, x17, [sp, #0x80]\n\t"
+    "mrs x16, NZCV\n\t"
+    "stp x30, x16, [sp, #0x90]\n\t"
+    "stp q0, q1, [sp, #0xa0]\n\t"
+    "stp q2, q3, [sp, #0xc0]\n\t"
+    "stp q4, q5, [sp, #0xe0]\n\t"
+    "stp q6, q7, [sp, #0x100]\n\t"
+    "stp q8, q9, [sp, #0x120]\n\t"
+    "stp q10, q11, [sp, #0x140]\n\t"
+    "stp q12, q13, [sp, #0x160]\n\t"
+    "stp q14, q15, [sp, #0x180]\n\t"
+    "stp q16, q17, [sp, #0x1a0]\n\t"
+    "stp q18, q19, [sp, #0x1c0]\n\t"
+    "stp q20, q21, [sp, #0x1e0]\n\t"
+    "stp q22, q23, [sp, #0x200]\n\t"
+    "stp q24, q25, [sp, #0x220]\n\t"
+    "stp q26, q27, [sp, #0x240]\n\t"
+    "stp q28, q29, [sp, #0x260]\n\t"
+    "stp q30, q31, [sp, #0x280]\n\t"
+    "bl " __ASM_NAME("aster_x18_enter") "\n\t"
+    "ldp q0, q1, [sp, #0xa0]\n\t"
+    "ldp q2, q3, [sp, #0xc0]\n\t"
+    "ldp q4, q5, [sp, #0xe0]\n\t"
+    "ldp q6, q7, [sp, #0x100]\n\t"
+    "ldp q8, q9, [sp, #0x120]\n\t"
+    "ldp q10, q11, [sp, #0x140]\n\t"
+    "ldp q12, q13, [sp, #0x160]\n\t"
+    "ldp q14, q15, [sp, #0x180]\n\t"
+    "ldp q16, q17, [sp, #0x1a0]\n\t"
+    "ldp q18, q19, [sp, #0x1c0]\n\t"
+    "ldp q20, q21, [sp, #0x1e0]\n\t"
+    "ldp q22, q23, [sp, #0x200]\n\t"
+    "ldp q24, q25, [sp, #0x220]\n\t"
+    "ldp q26, q27, [sp, #0x240]\n\t"
+    "ldp q28, q29, [sp, #0x260]\n\t"
+    "ldp q30, q31, [sp, #0x280]\n\t"
+    "ldp x30, x16, [sp, #0x90]\n\t"
+    "msr NZCV, x16\n\t"
+    "ldp x0, x1, [sp, #0x0]\n\t"
+    "ldp x2, x3, [sp, #0x10]\n\t"
+    "ldp x4, x5, [sp, #0x20]\n\t"
+    "ldp x6, x7, [sp, #0x30]\n\t"
+    "ldp x8, x9, [sp, #0x40]\n\t"
+    "ldp x10, x11, [sp, #0x50]\n\t"
+    "ldp x12, x13, [sp, #0x60]\n\t"
+    "ldp x14, x15, [sp, #0x70]\n\t"
+    "ldp x16, x17, [sp, #0x80]\n\t"
+    "add sp, sp, #0x300\n\t"
+    "ret\n\t"
+);
+__ASM_GLOBAL_FUNC( aster_x18_leave_preserve,
+    "sub sp, sp, #0x300\n\t"
+    "stp x0, x1, [sp, #0x0]\n\t"
+    "stp x2, x3, [sp, #0x10]\n\t"
+    "stp x4, x5, [sp, #0x20]\n\t"
+    "stp x6, x7, [sp, #0x30]\n\t"
+    "stp x8, x9, [sp, #0x40]\n\t"
+    "stp x10, x11, [sp, #0x50]\n\t"
+    "stp x12, x13, [sp, #0x60]\n\t"
+    "stp x14, x15, [sp, #0x70]\n\t"
+    "stp x16, x17, [sp, #0x80]\n\t"
+    "mrs x16, NZCV\n\t"
+    "stp x30, x16, [sp, #0x90]\n\t"
+    "stp q0, q1, [sp, #0xa0]\n\t"
+    "stp q2, q3, [sp, #0xc0]\n\t"
+    "stp q4, q5, [sp, #0xe0]\n\t"
+    "stp q6, q7, [sp, #0x100]\n\t"
+    "stp q8, q9, [sp, #0x120]\n\t"
+    "stp q10, q11, [sp, #0x140]\n\t"
+    "stp q12, q13, [sp, #0x160]\n\t"
+    "stp q14, q15, [sp, #0x180]\n\t"
+    "stp q16, q17, [sp, #0x1a0]\n\t"
+    "stp q18, q19, [sp, #0x1c0]\n\t"
+    "stp q20, q21, [sp, #0x1e0]\n\t"
+    "stp q22, q23, [sp, #0x200]\n\t"
+    "stp q24, q25, [sp, #0x220]\n\t"
+    "stp q26, q27, [sp, #0x240]\n\t"
+    "stp q28, q29, [sp, #0x260]\n\t"
+    "stp q30, q31, [sp, #0x280]\n\t"
+    "bl " __ASM_NAME("aster_x18_leave") "\n\t"
+    "ldp q0, q1, [sp, #0xa0]\n\t"
+    "ldp q2, q3, [sp, #0xc0]\n\t"
+    "ldp q4, q5, [sp, #0xe0]\n\t"
+    "ldp q6, q7, [sp, #0x100]\n\t"
+    "ldp q8, q9, [sp, #0x120]\n\t"
+    "ldp q10, q11, [sp, #0x140]\n\t"
+    "ldp q12, q13, [sp, #0x160]\n\t"
+    "ldp q14, q15, [sp, #0x180]\n\t"
+    "ldp q16, q17, [sp, #0x1a0]\n\t"
+    "ldp q18, q19, [sp, #0x1c0]\n\t"
+    "ldp q20, q21, [sp, #0x1e0]\n\t"
+    "ldp q22, q23, [sp, #0x200]\n\t"
+    "ldp q24, q25, [sp, #0x220]\n\t"
+    "ldp q26, q27, [sp, #0x240]\n\t"
+    "ldp q28, q29, [sp, #0x260]\n\t"
+    "ldp q30, q31, [sp, #0x280]\n\t"
+    "ldp x30, x16, [sp, #0x90]\n\t"
+    "msr NZCV, x16\n\t"
+    "ldp x0, x1, [sp, #0x0]\n\t"
+    "ldp x2, x3, [sp, #0x10]\n\t"
+    "ldp x4, x5, [sp, #0x20]\n\t"
+    "ldp x6, x7, [sp, #0x30]\n\t"
+    "ldp x8, x9, [sp, #0x40]\n\t"
+    "ldp x10, x11, [sp, #0x50]\n\t"
+    "ldp x12, x13, [sp, #0x60]\n\t"
+    "ldp x14, x15, [sp, #0x70]\n\t"
+    "ldp x16, x17, [sp, #0x80]\n\t"
+    "add sp, sp, #0x300\n\t"
+    "ret\n\t"
+);
+#define ASTER_X18_ENTER "bl " __ASM_NAME("aster_x18_enter_preserve") "\n\t"
+#define ASTER_X18_LEAVE "bl " __ASM_NAME("aster_x18_leave_preserve") "\n\t"
+#else
+#define ASTER_X18_ENTER
+#define ASTER_X18_LEAVE
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 #define NTDLL_DWARF_H_NO_UNWINDER
@@ -356,6 +492,10 @@ static void restore_context( struct thread_data *data, const CONTEXT *context, u
     LR_sig(sigcontext)     = context->Lr;   /* Link register */
     PSTATE_sig(sigcontext) = context->Cpsr; /* Current State Register */
     for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->X[i];
+#ifdef __APPLE__
+    /* SDK arm thread-state flag: sigreturn must restore the custom ABI too. */
+    if (aster_custom_x18) sigcontext->uc_mcontext->__ss.__pad |= 0x10;
+#endif
     restore_fpu( context, sigcontext );
 }
 
@@ -904,25 +1044,28 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp d12, d13, [x29, #0x80]\n\t"
                    "stp d14, d15, [x29, #0x90]\n\t"
                    "stp x1, x2, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
-                   "mov x18, x4\n\t"              /* teb */
                    "mrs x1, fpcr\n\t"
                    "mrs x2, fpsr\n\t"
                    "bfi x1, x2, #0, #32\n\t"
-                   "ldr x2, [x18]\n\t"            /* teb->Tib.ExceptionList */
+                   "ldr x2, [x4]\n\t"            /* teb->Tib.ExceptionList */
                    "stp x1, x2, [x29, #0xb0]\n\t"
 
-                   "ldr x7, [x18, #0x378]\n\t"    /* thread_data->syscall_frame */
+                   "ldr x7, [x4, #0x378]\n\t"    /* thread_data->syscall_frame */
                    "sub x1, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
-                   "str x1, [x18, #0x378]\n\t"    /* thread_data->syscall_frame */
+                   "str x1, [x4, #0x378]\n\t"    /* thread_data->syscall_frame */
                    "add x8, x29, #0xd0\n\t"
                    "stp x7, x8, [x1, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
-                   "ldr w11, [x18, #0x380]\n\t"   /* thread_data->syscall_trace */
+                   "mov sp, x1\n\t" /* protect callback frame from ABI helper stack */
+                   "ldr w11, [x4, #0x380]\n\t"   /* thread_data->syscall_trace */
                    "cbnz x11, 2f\n\t"
                    /* switch to user stack */
-                   "1:mov sp, x0\n\t"             /* user_sp */
+                   "1:\t"
+                   ASTER_X18_ENTER
+                   "mov x18, x4\n\t"
+                   "mov sp, x0\n\t"             /* user_sp */
                    __ASM_LOCAL_LABEL("call_user_mode_callback_user_stack") ":\n\t"
                    "br x3\n"
-                   "2:\tmov x19, x18\n\t"         /* teb */
+                   "2:\tmov x19, x4\n\t"         /* teb */
                    "mov x20, x0\n\t"              /* user_sp */
                    "mov x21, x3\n\t"              /* func */
                    "mov sp, x1\n\t"
@@ -930,7 +1073,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldp w2, w0, [x20, #8]\n\t"    /* len, id */
                    "str x0, [x29, #0xc0]\n\t"     /* id */
                    "bl " __ASM_NAME("trace_usercall") "\n\t"
-                   "mov x18, x19\n\t"             /* teb */
+                   "mov x4, x19\n\t"             /* teb */
                    "mov x0, x20\n\t"              /* user_sp */
                    "mov x3, x21\n\t"
                    "b 1b" )
@@ -1517,6 +1660,9 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     LR_sig(sigcontext)     = frame->lr;
     PSTATE_sig(sigcontext) = frame->cpsr;
     for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = frame->x[i];
+#ifdef __APPLE__
+    if (aster_custom_x18) sigcontext->uc_mcontext->__ss.__pad |= 0x10;
+#endif
 
 #ifdef linux
     {
@@ -1565,9 +1711,78 @@ void signal_free_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
+#ifdef __APPLE__
+static void aster_int_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    int_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_fpe_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    fpe_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_abrt_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    abrt_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_quit_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    quit_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_usr1_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    usr1_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_usr2_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    usr2_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_trap_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    trap_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_segv_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    segv_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+static void aster_ill_handler(int sig, siginfo_t *info, void *context) {
+    BOOL custom = aster_custom_x18 && os_custom_x18_abi_enabled();
+    if (custom) os_set_custom_x18_abi_enabled(false);
+    ill_handler(sig, info, context);
+    if (aster_custom_x18 && (custom || (((ucontext_t *)context)->uc_mcontext->__ss.__pad & 0x10) || PC_sig((ucontext_t *)context) == (ULONG_PTR)pKiUserExceptionDispatcher))
+        os_set_custom_x18_abi_enabled(true);
+}
+#endif
+
 void signal_init_process( TEB *teb )
 {
     struct sigaction sig_act;
+#ifdef __APPLE__
+    aster_custom_x18 = getenv("ASTER_CUSTOM_X18") && !strcmp(getenv("ASTER_CUSTOM_X18"), "1");
+#endif
 
     alloc_syscall_frame( sizeof(struct syscall_frame) );
     signal_alloc_thread( teb );
@@ -1575,24 +1790,60 @@ void signal_init_process( TEB *teb )
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
 
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_int_handler;
+#else
     sig_act.sa_sigaction = int_handler;
+#endif
     if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_fpe_handler;
+#else
     sig_act.sa_sigaction = fpe_handler;
+#endif
     if (sigaction( SIGFPE, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_abrt_handler;
+#else
     sig_act.sa_sigaction = abrt_handler;
+#endif
     if (sigaction( SIGABRT, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_quit_handler;
+#else
     sig_act.sa_sigaction = quit_handler;
+#endif
     if (sigaction( SIGQUIT, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_usr1_handler;
+#else
     sig_act.sa_sigaction = usr1_handler;
+#endif
     if (sigaction( SIGUSR1, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_usr2_handler;
+#else
     sig_act.sa_sigaction = usr2_handler;
+#endif
     if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_trap_handler;
+#else
     sig_act.sa_sigaction = trap_handler;
+#endif
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_segv_handler;
+#else
     sig_act.sa_sigaction = segv_handler;
+#endif
     if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
+    #ifdef __APPLE__
+    sig_act.sa_sigaction = aster_ill_handler;
+#else
     sig_act.sa_sigaction = ill_handler;
+#endif
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
     return;
 
@@ -1793,6 +2044,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "2:\tldr x16, [x21]\n\t"     /* table->ServiceTable */
                    "ldr x23, [x16, x20, lsl 3]\n\t"
                    "ldr w11, [x18, #0x380]\n\t" /* thread_data->syscall_trace */
+                   ASTER_X18_LEAVE
                    "cbnz x11, " __ASM_LOCAL_LABEL("trace_syscall") "\n\t"
                    "blr x23\n\t"
                    "mov sp, x22\n"
@@ -1816,7 +2068,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldp x10, x11, [sp, #0x50]\n\t"
                    "ldp x12, x13, [sp, #0x60]\n\t"
                    "ldp x14, x15, [sp, #0x70]\n"
-                   "2:\tldp x18, x19, [sp, #0x90]\n\t"
+                   "2:\t" ASTER_X18_ENTER
+                   "ldp x18, x19, [sp, #0x90]\n\t"
                    "ldp x20, x21, [sp, #0xa0]\n\t"
                    "ldp x22, x23, [sp, #0xb0]\n\t"
                    "ldp x24, x25, [sp, #0xc0]\n\t"
@@ -1928,10 +2181,12 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI_CFA_IS_AT2(x19, 0x98, 0x02) /* frame->syscall_cfa */
                    "ldr x16, [x0, x1, lsl 3]\n\t"
                    "mov x0, x2\n\t"             /* args */
+                   ASTER_X18_LEAVE
                    "blr x16\n\t"
                    "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
                    "cbnz w16, " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    __ASM_CFI_CFA_IS_AT2(sp, 0x98, 0x02) /* frame->syscall_cfa */
+                   ASTER_X18_ENTER
                    "ldp x18, x19, [sp, #0x90]\n\t"
                    "ldp x16, x17, [sp, #0xf8]\n\t"
                    /* switch to user stack */
